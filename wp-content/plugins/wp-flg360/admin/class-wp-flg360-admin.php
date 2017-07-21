@@ -163,10 +163,40 @@ class Wp_Flg360_Admin {
 			array( $this, $this->option_name . '_key_cb' ),
 			$this->plugin_name,
 			$this->option_name . '_general',
-			array( 'label_for' => $this->option_name . '_position' )
+			array( 'label_for' => $this->option_name . '_key' )
+		);
+
+		add_settings_field(
+			$this->option_name . '_url',
+			__( 'Request URL', 'wp-flg360' ),
+			array( $this, $this->option_name . '_url_cb' ),
+			$this->plugin_name,
+			$this->option_name . '_general',
+			array( 'label_for' => $this->option_name . '_url' )
+		);
+
+		add_settings_field(
+			$this->option_name . '_leadgroup',
+			__( 'LeadGroup', 'wp-flg360' ),
+			array( $this, $this->option_name . '_leadgroup_cb' ),
+			$this->plugin_name,
+			$this->option_name . '_general',
+			array( 'label_for' => $this->option_name . '_leadgroup' )
+		);
+
+		add_settings_field(
+			$this->option_name . '_site',
+			__( 'Site', 'wp-flg360' ),
+			array( $this, $this->option_name . '_site_cb' ),
+			$this->plugin_name,
+			$this->option_name . '_general',
+			array( 'label_for' => $this->option_name . '_site' )
 		);
 
 		register_setting( $this->plugin_name, $this->option_name . '_key' );
+		register_setting( $this->plugin_name, $this->option_name . '_url' );
+		// register_setting( $this->plugin_name, $this->option_name . '_leadgroup' );
+		// register_setting( $this->plugin_name, $this->option_name . '_site' );
 	}
 
 	/**
@@ -186,6 +216,36 @@ class Wp_Flg360_Admin {
 	public function wp_flg360_api_key_cb() {
 		$api_key = get_option( $this->option_name . '_key' );
 		echo '<input type="text" name="' . $this->option_name . '_key' . '" id="' . $this->option_name . '_key' . '" value="' . $api_key . '"/>';
+	}
+
+	/**
+	 * Render the Request URL input for this plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function wp_flg360_api_url_cb() {
+		$url = get_option( $this->option_name . '_url' );
+		echo '<input type="text" name="' . $this->option_name . '_url' . '" id="' . $this->option_name . '_url' . '" value="' . $url . '"/>';
+	}
+
+	/**
+	 * Render the Request URL input for this plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function wp_flg360_api_leadgroup_cb() {
+		$leadgroup = get_option( $this->option_name . '_leadgroup' );
+		echo '<input type="text" disabled name="' . $this->option_name . '_leadgroup' . '" id="' . $this->option_name . '_leadgroup' . '" value="' . $leadgroup . '"/>';
+	}
+
+	/**
+	 * Render the Request URL input for this plugin
+	 *
+	 * @since  1.0.0
+	 */
+	public function wp_flg360_api_site_cb() {
+		$site = get_option( $this->option_name . '_site' );
+		echo '<input type="text" disabled name="' . $this->option_name . '_site' . '" id="' . $this->option_name . '_site' . '" value="' . $site . '"/>';
 	}
 
 }

@@ -100,4 +100,119 @@ class Wp_Flg360_Public {
 
 	}
 
+	/**
+	 * Track Contact Form 7 forms submissions
+	 *
+	 * @since    1.0.0
+	 */
+	public function track_cf7_post() {
+
+		if ( $_POST ) {
+			if ( isset( $_POST['_wpcf7'] ) && ( !empty( $_POST['_wpcf7'] ) ) ) {	// if it's a CF7 submission
+
+				$front_end_fields = array();	// empty array by default
+
+				foreach ($_POST as $key => $value) {
+					if ( strpos( $key, '_wpcf7' ) === false ) {	// filter ONLY front-end fields
+						$front_end_fields[strtolower($key)] = $value;
+					}
+				}
+				$this->send_lead_to_flg($front_end_fields);
+				// echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
+			}
+		}
+	}
+
+	protected function send_lead_to_flg($front_end_fields) {
+
+		// echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
+
+        $key 		= get_option('wp_flg360_api_key');			// API Access key
+        $url 		= get_option('wp_flg360_api_url');			// API Request URL
+        $leadgroup 	= get_option('wp_flg360_api_leadgroup');	// API LeadGroup
+        $site 		= get_option('wp_flg360_api_site');			// API registered Site
+
+        $lead = array();										// empty lead by default
+
+        $lead['key'] 		= $key;
+        $lead['leadgroup'] 	= $leadgroup;
+        $lead['site'] 		= $site;
+        $lead['introducer'] = 0;
+        // $lead['user']		= $front_end_fields['firstname'] . ' ' . $front_end_fields['surname'];
+        $lead['source']		= $front_end_fields['source'];
+        $lead['title'] 		= $front_end_fields['title'];
+        $lead['firstname'] 	= $front_end_fields['firstname'];
+        $lead['lastname'] 	= $front_end_fields['surname'];
+        $lead['jobtitle'] 	= $front_end_fields['occupation'];
+        $lead['phone1'] 	= $front_end_fields['mobile'];
+        $lead['phone2'] 	= $front_end_fields['mobile'];
+        $lead['email'] 		= $front_end_fields['email'];
+        $lead['address'] 	= $front_end_fields['housenumber'];
+        $lead['postcode'] 	= $front_end_fields['postcode'];
+    	$lead['dobday'] 	= $front_end_fields['dobday'];
+        $lead['dobmonth'] 	= $front_end_fields['dobmonth'];
+        $lead['dobyear'] 	= $front_end_fields['dobyear'];
+        $lead['contactphone'] 		= ( !empty( $front_end_fields['mobile'] ) ? 'Yes' : 'No');
+        $lead['contactemail'] 		= ( !empty( $front_end_fields['email'] ) ? 'Yes' : 'No' );
+        $lead['contacttime'] 		= 'Anytime';
+        $lead['data1'] 		= $front_end_fields['living'];
+        $lead['data2'] 		= $front_end_fields['promocode'];
+        $lead['data3'] 		= $front_end_fields['addedcomments'];
+        $lead['data4'] 		= $front_end_fields['vehicle'];
+        $lead['data5'] 		= $front_end_fields['licence'];
+
+
+        $dom = new DOMDocument('1.0', 'iso-8859-1');
+        $root = $dom->createElement('data');
+        $dom->appendChild($root);
+        $wrap = $dom->createElement('lead');
+        foreach ($lead as $key => $data) {
+            $element = $dom->createElement($key);
+            $value = $dom->createTextNode($data);
+            $element->appendChild($value);
+            $wrap->appendChild($element);
+        }
+        $root->appendChild($wrap);
+        $send_xml = $dom->saveXML();
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $send_xml);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
+        $result = curl_exec($ch);
+        echo '<pre>'; print_r($result); echo '</pre>'; exit;
+        $output = array();
+        $output['success'] = true;
+        if (curl_errno($ch)) {
+            $output['success'] = false;
+            $output['message'] = 'ERROR from curl_errno -> ' . curl_errno($ch) . ': ' . curl_error($ch);
+        } else {
+            $returnCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            switch ($returnCode) {
+                case 200:
+                    $dom->loadXML($result);
+                    if ($dom->getElementsByTagName('status')->item(0)->textContent == "0") {
+                        //good request
+                        $output['message'] = "<p> Response Status: Passed - Message: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+                        $output['message'] .= "<p> FLG NUMBER: " . $dom->getElementsByTagName('id')->item(0)->textContent;
+                        $output['flgNo'] = $dom->getElementsByTagName('id')->item(0)->textContent;
+                        return $output;
+                    } else {
+                        $output['success'] = false;
+                        $output['message'] = "<p> API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+                    }
+                    break;
+                default:
+                    $output['success'] = false;
+                    $output['message'] = '<p>HTTP ERROR -> ' . $returnCode;
+                    break;
+            }
+        }
+        curl_close($ch);
+
+        return $output;
+    }
+
 }
