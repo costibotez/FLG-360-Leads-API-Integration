@@ -120,7 +120,7 @@ class Wp_Flg360_Public {
 				if ( $this->send_lead_to_flg($front_end_fields) === 1) {
 					echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
 				} else {
-					echo 'Not sent'; exit;
+					echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
 				}
 			}
 		}
@@ -226,8 +226,8 @@ class Wp_Flg360_Public {
 
 			if ( !is_wp_error($user_id) ) {
                 foreach ($front_end_fields as $key => $value) {
-                    if (!update_user_meta($user_id, $key, $value, get_user_meta($user_id, $key, $value))) {
-                        add_user_meta($user_id, $key, $value, true);
+                    if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
+                        add_user_meta($user_id, 'lead_'.$key, $value, true);
                     }
                 }
 				return $user_id;

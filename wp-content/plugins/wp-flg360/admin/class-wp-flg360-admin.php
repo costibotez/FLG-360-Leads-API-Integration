@@ -248,4 +248,31 @@ class Wp_Flg360_Admin {
 		echo '<input type="text" disabled name="' . $this->option_name . '_site' . '" id="' . $this->option_name . '_site' . '" value="' . $site . '"/>';
 	}
 
+	/**
+	 * Adding extra fields to User Profile
+	 *
+	 * @since  1.0.0
+	 */
+	public function extra_user_profile_fields( $user ) {
+
+		$user_meta = get_user_meta( $user->ID ); ?>
+
+	    <h3><?php _e('Lead information', 'wp-flg360'); ?></h3>
+	    <table class="form-table">
+	    <?php //echo '<pre>'; print_r($user_meta); ?>
+	    <?php foreach ($user_meta as $key => $value) : ?>
+	    	<?php if ( strpos( $key, 'lead_' ) !== false ) : ?>
+	    		<tr>
+			        <th>
+			        	<label for="<?php echo $key; ?>"><?php echo ucfirst(substr($key, 5)); ?></label>
+			        </th>
+			        <td>
+			            <input type="text" disabled name="<?php echo $key; ?>" id="<?php echo $key; ?>" value="<?php echo esc_attr( $value[0] ); ?>" class="regular-text" /><br />
+			        </td>
+			    </tr>
+	    	<?php endif; ?>
+	    <?php endforeach; ?>
+	    </table>
+	<?php }
+
 }
