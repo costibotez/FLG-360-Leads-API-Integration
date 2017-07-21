@@ -205,7 +205,9 @@ class Wp_Flg360_Admin {
 	 * @since  1.0.0
 	 */
 	public function wp_flg360_api_general_cb() {
+
 		echo '<p>' . __( 'Please change the settings accordingly.', 'wp-flg360' ) . '</p>';
+
 	}
 
 	/**
@@ -214,8 +216,10 @@ class Wp_Flg360_Admin {
 	 * @since  1.0.0
 	 */
 	public function wp_flg360_api_key_cb() {
+
 		$api_key = get_option( $this->option_name . '_key' );
 		echo '<input type="text" name="' . $this->option_name . '_key' . '" id="' . $this->option_name . '_key' . '" value="' . $api_key . '"/>';
+
 	}
 
 	/**
@@ -224,8 +228,10 @@ class Wp_Flg360_Admin {
 	 * @since  1.0.0
 	 */
 	public function wp_flg360_api_url_cb() {
+
 		$url = get_option( $this->option_name . '_url' );
 		echo '<input type="text" name="' . $this->option_name . '_url' . '" id="' . $this->option_name . '_url' . '" value="' . $url . '"/>';
+
 	}
 
 	/**
@@ -234,8 +240,10 @@ class Wp_Flg360_Admin {
 	 * @since  1.0.0
 	 */
 	public function wp_flg360_api_leadgroup_cb() {
+
 		$leadgroup = get_option( $this->option_name . '_leadgroup' );
 		echo '<input type="text" name="' . $this->option_name . '_leadgroup' . '" id="' . $this->option_name . '_leadgroup' . '" value="' . $leadgroup . '"/>';
+
 	}
 
 	/**
@@ -244,8 +252,10 @@ class Wp_Flg360_Admin {
 	 * @since  1.0.0
 	 */
 	public function wp_flg360_api_site_cb() {
+
 		$site = get_option( $this->option_name . '_site' );
 		echo '<input type="text" name="' . $this->option_name . '_site' . '" id="' . $this->option_name . '_site' . '" value="' . $site . '"/>';
+
 	}
 
 	/**
@@ -273,6 +283,7 @@ class Wp_Flg360_Admin {
 	    	<?php endif; ?>
 	    <?php endforeach; ?>
 	    </table>
+
 	<?php }
 
 	/**
@@ -281,6 +292,7 @@ class Wp_Flg360_Admin {
 	 * @since  1.0.0
 	 */
 	public function save_extra_user_profile_fields( $user_id ) {
+
 	    if ( !current_user_can( 'edit_user', $user_id ) ) {
 	        return false;
 	    }
@@ -290,6 +302,98 @@ class Wp_Flg360_Admin {
 	    		update_user_meta( $user_id, $key, $_POST[$key] );
 	    	}
 	    }
+
+	    $this->update_flg360_user_profile( $user_id );
+	    // echo '<pre>'; print_r( $this->update_flg360_user_profile( $user_id ) ); echo '</pre>'; exit;
+
+	}
+
+	public function update_flg360_user_profile( $user_id ) {
+
+		$key 		= get_option( $this->option_name . '_key' );			// API Access key
+        $url 		= get_option( $this->option_name . '_url' );			// API Request URL
+        $leadgroup 	= get_option( $this->option_name . '_leadgroup' );		// API LeadGroup
+        $site 		= get_option( $this->option_name . '_site' );			// API registered Site
+
+        $lead = array();										// empty lead by default
+
+        $lead['key'] 		= $key;
+        $lead['id']			= get_user_meta( $user_id, 'lead_key' , true );
+        $lead['source']		= get_user_meta( $user_id, 'lead_source', true );
+        $lead['title'] 		= get_user_meta( $user_id, 'lead_title', true );
+        $lead['firstname'] 	= get_user_meta( $user_id, 'lead_firstname', true );
+        $lead['lastname'] 	= get_user_meta( $user_id, 'lead_surname', true );
+        $lead['jobtitle'] 	= get_user_meta( $user_id, 'lead_occupation', true );
+        $lead['phone1'] 	= get_user_meta( $user_id, 'lead_mobile', true );
+        $lead['phone2'] 	= get_user_meta( $user_id, 'lead_mobile', true );
+        $lead['email'] 		= get_user_meta( $user_id, 'lead_email', true );
+        $lead['address'] 	= get_user_meta( $user_id, 'lead_housenumber', true );
+        $lead['postcode'] 	= get_user_meta( $user_id, 'lead_postcode', true );
+    	$lead['dobday'] 	= get_user_meta( $user_id, 'lead_dobday', true );
+        $lead['dobmonth'] 	= get_user_meta( $user_id, 'lead_dobmonth', true );
+        $lead['dobyear'] 	= get_user_meta( $user_id, 'lead_dobyear', true );
+        $lead['contactphone'] 		= ( !empty( get_user_meta( $user_id, 'lead_mobile', true ) ) ? 'Yes' : 'No');
+        $lead['contactemail'] 		= ( !empty( get_user_meta( $user_id, 'lead_email', true ) ) ? 'Yes' : 'No' );
+        $lead['contacttime'] 		= 'Anytime';
+        $lead['data1'] 		= get_user_meta( $user_id, 'living', true );
+        $lead['data2'] 		= get_user_meta( $user_id, 'promocode', true );
+        $lead['data3'] 		= get_user_meta( $user_id, 'addedcomments', true );
+        $lead['data4'] 		= get_user_meta( $user_id, 'vehicle', true );
+        $lead['data5'] 		= get_user_meta( $user_id, 'licence', true );
+
+        $dom = new DOMDocument('1.0', 'iso-8859-1');
+        $root = $dom->createElement('data');
+        $dom->appendChild($root);
+        $wrap = $dom->createElement('lead');
+        foreach ($lead as $key => $data) {
+            $element = $dom->createElement($key);
+            $value = $dom->createTextNode($data);
+            $element->appendChild($value);
+            $wrap->appendChild($element);
+        }
+        $root->appendChild($wrap);
+        $send_xml = $dom->saveXML();
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $send_xml);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
+        $result = curl_exec($ch);
+        // echo '<pre>'; print_r($result); echo '</pre>'; exit;
+        $output = array();
+        $output['success'] = true;
+        if (curl_errno($ch)) {
+            $output['success'] = false;
+            $output['message'] = 'ERROR from curl_errno -> ' . curl_errno($ch) . ': ' . curl_error($ch);
+        } else {
+            $returnCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            switch ($returnCode) {
+                case 200:
+                    $dom->loadXML($result);
+                    if ($dom->getElementsByTagName('status')->item(0)->textContent == "0") {
+                        //good request
+                        $output['message'] = "<p> Response Status: Passed - Message: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+                        $output['message'] .= "<p> FLG NUMBER: " . $dom->getElementsByTagName('id')->item(0)->textContent;
+                        $output['flgNo'] = $dom->getElementsByTagName('id')->item(0)->textContent;
+                        update_user_meta( $user_id, 'lead_key', $output['flgNo'] );
+                        return $output;
+                    } else {
+                        $output['success'] = false;
+                        $output['message'] = "<p> API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+                    }
+                    break;
+                default:
+                    $output['success'] = false;
+                    $output['message'] = '<p>HTTP ERROR -> ' . $returnCode;
+                    break;
+            }
+        }
+        curl_close($ch);
+
+        return $output;
+
 	}
 
 }

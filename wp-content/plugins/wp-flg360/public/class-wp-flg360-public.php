@@ -124,7 +124,7 @@ class Wp_Flg360_Public {
 				// 	echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
 				// }
 
-				$this->send_lead_to_flg($front_end_fields);
+				echo '<pre>'; print_r($this->send_lead_to_flg($front_end_fields)); echo '</pre>'; exit;
 			}
 		}
 	}
@@ -173,8 +173,6 @@ class Wp_Flg360_Public {
 	        $lead['data4'] 		= $front_end_fields['vehicle'];
 	        $lead['data5'] 		= $front_end_fields['licence'];
 
-
-
 	        $dom = new DOMDocument('1.0', 'iso-8859-1');
 	        $root = $dom->createElement('data');
 	        $dom->appendChild($root);
@@ -196,9 +194,37 @@ class Wp_Flg360_Public {
 	        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
 	        $result = curl_exec($ch);
 	        // echo '<pre>'; print_r($result); echo '</pre>'; exit;
+	        $output = array();
+	        $output['success'] = true;
+	        if (curl_errno($ch)) {
+	            $output['success'] = false;
+	            $output['message'] = 'ERROR from curl_errno -> ' . curl_errno($ch) . ': ' . curl_error($ch);
+	        } else {
+	            $returnCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	            switch ($returnCode) {
+	                case 200:
+	                    $dom->loadXML($result);
+	                    if ($dom->getElementsByTagName('status')->item(0)->textContent == "0") {
+	                        //good request
+	                        $output['message'] = "<p> Response Status: Passed - Message: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+	                        $output['message'] .= "<p> FLG NUMBER: " . $dom->getElementsByTagName('id')->item(0)->textContent;
+	                        $output['flgNo'] = $dom->getElementsByTagName('id')->item(0)->textContent;
+	                        update_user_meta( $user_id, 'lead_key', $output['flgNo'] );
+	                        return $output;
+	                    } else {
+	                        $output['success'] = false;
+	                        $output['message'] = "<p> API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+	                    }
+	                    break;
+	                default:
+	                    $output['success'] = false;
+	                    $output['message'] = '<p>HTTP ERROR -> ' . $returnCode;
+	                    break;
+	            }
+	        }
 	        curl_close($ch);
 
-	        return 1;
+	        return $output;
 	    }
 
 	    return 0;
