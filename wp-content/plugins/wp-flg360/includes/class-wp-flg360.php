@@ -157,6 +157,8 @@ class Wp_Flg360 {
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'register_setting' );
 		$this->loader->add_action( 'show_user_profile', $plugin_admin, 'extra_user_profile_fields' );
 		$this->loader->add_action( 'edit_user_profile', $plugin_admin, 'extra_user_profile_fields' );
+		$this->loader->add_action( 'personal_options_update', $plugin_admin, 'save_extra_user_profile_fields' );
+		$this->loader->add_action( 'edit_user_profile_update', $plugin_admin, 'save_extra_user_profile_fields' );
 
 	}
 

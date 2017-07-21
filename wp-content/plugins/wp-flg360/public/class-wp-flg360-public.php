@@ -117,11 +117,14 @@ class Wp_Flg360_Public {
 						$front_end_fields[strtolower($key)] = $value;
 					}
 				}
-				if ( $this->send_lead_to_flg($front_end_fields) === 1) {
-					echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
-				} else {
-					echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
-				}
+				// Debug - test in NetWork area for bugs
+				// if ( $this->send_lead_to_flg($front_end_fields) === 1) {
+				// 	echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
+				// } else {
+				// 	echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
+				// }
+
+				$this->send_lead_to_flg($front_end_fields);
 			}
 		}
 	}

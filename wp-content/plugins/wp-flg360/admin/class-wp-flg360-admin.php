@@ -195,8 +195,8 @@ class Wp_Flg360_Admin {
 
 		register_setting( $this->plugin_name, $this->option_name . '_key' );
 		register_setting( $this->plugin_name, $this->option_name . '_url' );
-		// register_setting( $this->plugin_name, $this->option_name . '_leadgroup' );
-		// register_setting( $this->plugin_name, $this->option_name . '_site' );
+		register_setting( $this->plugin_name, $this->option_name . '_leadgroup' );
+		register_setting( $this->plugin_name, $this->option_name . '_site' );
 	}
 
 	/**
@@ -235,7 +235,7 @@ class Wp_Flg360_Admin {
 	 */
 	public function wp_flg360_api_leadgroup_cb() {
 		$leadgroup = get_option( $this->option_name . '_leadgroup' );
-		echo '<input type="text" disabled name="' . $this->option_name . '_leadgroup' . '" id="' . $this->option_name . '_leadgroup' . '" value="' . $leadgroup . '"/>';
+		echo '<input type="text" name="' . $this->option_name . '_leadgroup' . '" id="' . $this->option_name . '_leadgroup' . '" value="' . $leadgroup . '"/>';
 	}
 
 	/**
@@ -245,7 +245,7 @@ class Wp_Flg360_Admin {
 	 */
 	public function wp_flg360_api_site_cb() {
 		$site = get_option( $this->option_name . '_site' );
-		echo '<input type="text" disabled name="' . $this->option_name . '_site' . '" id="' . $this->option_name . '_site' . '" value="' . $site . '"/>';
+		echo '<input type="text" name="' . $this->option_name . '_site' . '" id="' . $this->option_name . '_site' . '" value="' . $site . '"/>';
 	}
 
 	/**
@@ -260,19 +260,36 @@ class Wp_Flg360_Admin {
 	    <h3><?php _e('Lead information', 'wp-flg360'); ?></h3>
 	    <table class="form-table">
 	    <?php //echo '<pre>'; print_r($user_meta); ?>
-	    <?php foreach ($user_meta as $key => $value) : ?>
-	    	<?php if ( strpos( $key, 'lead_' ) !== false ) : ?>
+	    <?php foreach ( $user_meta as $key => $value ) : ?>
+	    	<?php if ( strpos( $key, 'lead_' ) !== false && $key != 'lead_data' ) : ?>
 	    		<tr>
 			        <th>
-			        	<label for="<?php echo $key; ?>"><?php echo ucfirst(substr($key, 5)); ?></label>
+			        	<label for="<?php echo $key; ?>"><?php echo ucfirst( substr( $key, 5 ) ); ?></label>
 			        </th>
 			        <td>
-			            <input type="text" disabled name="<?php echo $key; ?>" id="<?php echo $key; ?>" value="<?php echo esc_attr( $value[0] ); ?>" class="regular-text" /><br />
+			            <input type="text" name="<?php echo $key; ?>" id="<?php echo $key; ?>" value="<?php echo esc_attr( $value[0] ); ?>" class="regular-text" /><br />
 			        </td>
 			    </tr>
 	    	<?php endif; ?>
 	    <?php endforeach; ?>
 	    </table>
 	<?php }
+
+	/**
+	 * Adding extra fields to User Profile
+	 *
+	 * @since  1.0.0
+	 */
+	public function save_extra_user_profile_fields( $user_id ) {
+	    if ( !current_user_can( 'edit_user', $user_id ) ) {
+	        return false;
+	    }
+	    $user_meta = get_user_meta( $user_id );
+	    foreach ( $user_meta as $key => $value ) {
+	    	if ( strpos( $key, 'lead_' ) !== false && $key != 'lead_data' ) {
+	    		update_user_meta( $user_id, $key, $_POST[$key] );
+	    	}
+	    }
+	}
 
 }
