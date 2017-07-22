@@ -106,10 +106,10 @@ class Wp_Flg360_Public {
 	 * @since    1.0.0
 	 */
 	public function track_cf7_post() {
-
 		if ( $_POST ) {
 			if ( isset( $_POST['_wpcf7'] ) && ( !empty( $_POST['_wpcf7'] ) ) ) {	// if it's a CF7 submission
 
+			// echo '<pre>'; print_r($_POST); echo '</pre>'; exit;
 				$front_end_fields = array();	// empty array by default
 
 				foreach ($_POST as $key => $value) {
@@ -123,8 +123,9 @@ class Wp_Flg360_Public {
 				// } else {
 				// 	echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
 				// }
-
-				echo '<pre>'; print_r($this->send_lead_to_flg($front_end_fields)); echo '</pre>'; exit;
+				$this->send_lead_to_flg($front_end_fields);
+				// echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
+				// echo '<pre>'; print_r($this->send_lead_to_flg($front_end_fields)); echo '</pre>'; exit;
 			}
 		}
 	}
@@ -151,7 +152,7 @@ class Wp_Flg360_Public {
 	        $lead['site'] 		= $site;
 	        // $lead['introducer'] = $user_id;
 	        // $lead['user']		= $user_id;
-	        $lead['source']		= $front_end_fields['source'];
+	        $lead['source']		= 'Google';
 	        $lead['title'] 		= $front_end_fields['title'];
 	        $lead['firstname'] 	= $front_end_fields['firstname'];
 	        $lead['lastname'] 	= $front_end_fields['surname'];
