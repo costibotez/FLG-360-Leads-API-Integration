@@ -335,9 +335,9 @@ class Wp_Flg360_Admin {
         $lead['contactphone'] 		= ( !empty( get_user_meta( $user_id, 'lead_mobile', true ) ) ? 'Yes' : 'No');
         $lead['contactemail'] 		= ( !empty( get_user_meta( $user_id, 'lead_email', true ) ) ? 'Yes' : 'No' );
         $lead['contacttime'] 		= 'Anytime';
-        $lead['data1'] 		= get_user_meta( $user_id, 'living', true );
-        $lead['data2'] 		= get_user_meta( $user_id, 'promocode', true );
-        $lead['data3'] 		= get_user_meta( $user_id, 'addedcomments', true );
+        $lead['data1'] 		= get_user_meta( $user_id, 'occupation', true );
+        $lead['data2'] 		= get_user_meta( $user_id, 'living', true );
+        $lead['data3'] 		= get_user_meta( $user_id, 'notbankrupt', true );
         $lead['data4'] 		= get_user_meta( $user_id, 'vehicle', true );
         $lead['data5'] 		= get_user_meta( $user_id, 'licence', true );
 

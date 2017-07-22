@@ -168,9 +168,9 @@ class Wp_Flg360_Public {
 	        $lead['contactphone'] 		= ( !empty( $front_end_fields['mobile'] ) ? 'Yes' : 'No');
 	        $lead['contactemail'] 		= ( !empty( $front_end_fields['email'] ) ? 'Yes' : 'No' );
 	        $lead['contacttime'] 		= 'Anytime';
-	        $lead['data1'] 		= $front_end_fields['living'];
-	        $lead['data2'] 		= $front_end_fields['promocode'];
-	        $lead['data3'] 		= $front_end_fields['addedcomments'];
+	        $lead['data1'] 		= $front_end_fields['occupation'];
+	        $lead['data2'] 		= $front_end_fields['living'];
+	        $lead['data3'] 		= $front_end_fields['notbankrupt'];
 	        $lead['data4'] 		= $front_end_fields['vehicle'];
 	        $lead['data5'] 		= $front_end_fields['licence'];
 
