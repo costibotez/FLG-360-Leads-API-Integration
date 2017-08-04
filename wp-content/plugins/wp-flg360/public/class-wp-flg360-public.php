@@ -40,6 +40,7 @@ class Wp_Flg360_Public {
 	 */
 	private $version;
 
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -106,12 +107,16 @@ class Wp_Flg360_Public {
 	 * @since    1.0.0
 	 */
 	public function track_cf7_post() {
+
 		if ( $_POST ) {
+
 			if ( isset( $_POST['_wpcf7'] ) && ( !empty( $_POST['_wpcf7'] ) ) ) {	// if it's a CF7 submission
 
 			// echo '<pre>'; print_r($_POST); echo '</pre>'; exit;
 				$front_end_fields = array();	// empty array by default
-
+				if( !empty( $_SERVER['HTTP_REFERER'] ) ) {
+					$front_end_fields['tracking'] = explode("?", $_SERVER['HTTP_REFERER'])[1];
+				}
 				foreach ($_POST as $key => $value) {
 					if ( strpos( $key, '_wpcf7' ) === false ) {	// filter ONLY front-end fields
 						$front_end_fields[strtolower($key)] = $value;
@@ -119,7 +124,7 @@ class Wp_Flg360_Public {
 				}
 				// Debug - test in NetWork area for bugs
 				// if ( $this->send_lead_to_flg($front_end_fields) === 1) {
-				// 	echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
+					// echo '<pre>'; print_r($this->get_vars); echo '</pre>'; exit;
 				// } else {
 				// 	echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
 				// }
@@ -138,7 +143,7 @@ class Wp_Flg360_Public {
 	protected function send_lead_to_flg($front_end_fields) {
 
 		$user_id = $this->create_user_into_wp($front_end_fields);
-		// echo '<pre>'; print_r($user_id); echo '</pre>'; exit;
+		// echo '<pre>'; print_r(explode('&',$front_end_fields['tracking'])[2]); echo '</pre>'; exit;
 		if( $user_id > 0 ) {	// filter -1 (already exists) and -2(not valid email)
 	        $key 		= get_option('wp_flg360_api_key');			// API Access key
 	        $url 		= get_option('wp_flg360_api_url');			// API Request URL
@@ -152,7 +157,43 @@ class Wp_Flg360_Public {
 	        $lead['site'] 		= $site;
 	        // $lead['introducer'] = $user_id;
 	        // $lead['user']		= $user_id;
-	        $lead['source']		= 'Google';
+	        if( isset( $front_end_fields['tracking'] ) ) {
+	        	$tracking_pairs = explode('&',$front_end_fields['tracking']);
+	        	if( strpos($tracking_pairs[0], '=') !== false ) {
+	        		$source = explode('=', $tracking_pairs[0])[1];
+	        		$lead['source']	= $source;
+	        	}
+	        	if( strpos($tracking_pairs[1], '=') !== false ) {
+	        		$medium = explode('=', $tracking_pairs[1])[1];
+	        		$lead['medium']	= $medium;
+	        	}
+	        	if( strpos($tracking_pairs[2], '=') !== false ) {
+	        		$term = explode('=', $tracking_pairs[2])[1];
+	        		$lead['term']	= $term;
+	        	}
+	        } else {
+	        	$lead['source']	= $front_end_fields['source'];
+	        	switch ($front_end_fields['source']) {
+	        		case 'Facebook':
+	        			$lead['medium']	= 'Referral';
+	        			break;
+	        		case 'Email':
+	        			$lead['medium']	= 'Referral';
+	        			break;
+	        		case 'Radio':
+	        			$lead['medium']	= 'Referral';
+	        			break;
+	        		case 'Google':
+	        			$lead['medium']	= 'Organic';
+	        			break;
+	        		case 'Bing':
+	        			$lead['medium']	= 'Organic';
+	        			break;
+	        		case 'Buses':
+	        			$lead['medium']	= 'Referral';
+	        			break;
+	        	}
+	        }
 	        $lead['title'] 		= $front_end_fields['title'];
 	        $lead['firstname'] 	= $front_end_fields['firstname'];
 	        $lead['lastname'] 	= $front_end_fields['surname'];
@@ -233,38 +274,66 @@ class Wp_Flg360_Public {
     }
 
     /**
-	 * Send CF7 submissions to FLG360
+	 * Create user into WP before converting into lead
 	 *
 	 * @since    1.0.0
 	 */
-	protected function create_user_into_wp($front_end_fields) {
-		if( !empty( $front_end_fields['email'] ) && $this->is_valid_email( $front_end_fields['email'] ) ) {
-		// return -1;
+	protected function create_user_into_wp( $front_end_fields ) {
+		if( !empty( $front_end_fields['form_id'] ) && $front_end_fields['form_id'] == '7930') {
+			if( !empty( $front_end_fields['firstname'] ) && !empty( $front_end_fields['surname'] ) && !empty( $front_end_fields['postcode'] ) && !empty( $front_end_fields['mobile'] ) && !empty( $front_end_fields['housenumber'] ) && !empty( $front_end_fields['email'] ) && $this->is_valid_email( $front_end_fields['email'] ) ) {
 
-			$username = explode("@", $front_end_fields['email'])[0];
-			$password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
-			$email_address = $front_end_fields['email'];
+				$username = explode("@", $front_end_fields['email'])[0];
+				$password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
+				$email_address = $front_end_fields['email'];
 
-			$user_id = -1;
+				$user_id = -1;
 
-			if ( ! username_exists( $username ) ) {
-				$user_id = wp_create_user( $username, $password, $email_address );
-				$user = new WP_User( $user_id );
-				$user->set_role( 'subscriber' );
+				if ( ! username_exists( $username ) ) {
+					$user_id = wp_create_user( $username, $password, $email_address );
+					$user = new WP_User( $user_id );
+					$user->set_role( 'subscriber' );
 
+				}
+
+				if ( !is_wp_error($user_id) ) {
+	                foreach ($front_end_fields as $key => $value) {
+	                    if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
+	                        add_user_meta($user_id, 'lead_'.$key, $value, true);
+	                    }
+	                }
+					return $user_id;
+	            }
+				return -1;
 			}
+			return -2;
+		} else {
+			if( !empty( $front_end_fields['firstname'] ) && !empty( $front_end_fields['surname'] ) && !empty( $front_end_fields['email'] ) && $this->is_valid_email( $front_end_fields['email'] ) ) {
 
-			if ( !is_wp_error($user_id) ) {
-                foreach ($front_end_fields as $key => $value) {
-                    if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
-                        add_user_meta($user_id, 'lead_'.$key, $value, true);
-                    }
-                }
-				return $user_id;
-            }
-			return -1;
+				$username = explode("@", $front_end_fields['email'])[0];
+				$password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
+				$email_address = $front_end_fields['email'];
+
+				$user_id = -1;
+
+				if ( ! username_exists( $username ) ) {
+					$user_id = wp_create_user( $username, $password, $email_address );
+					$user = new WP_User( $user_id );
+					$user->set_role( 'subscriber' );
+
+				}
+
+				if ( !is_wp_error($user_id) ) {
+	                foreach ($front_end_fields as $key => $value) {
+	                    if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
+	                        add_user_meta($user_id, 'lead_'.$key, $value, true);
+	                    }
+	                }
+					return $user_id;
+	            }
+				return -1;
+			}
+			return -2;
 		}
-		return -2;
 	}
 
 	/**
