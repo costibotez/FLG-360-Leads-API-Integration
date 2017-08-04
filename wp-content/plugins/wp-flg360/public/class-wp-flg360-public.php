@@ -115,7 +115,10 @@ class Wp_Flg360_Public {
 			// echo '<pre>'; print_r($_POST); echo '</pre>'; exit;
 				$front_end_fields = array();	// empty array by default
 				if( !empty( $_SERVER['HTTP_REFERER'] ) ) {
-					$front_end_fields['tracking'] = explode("?", $_SERVER['HTTP_REFERER'])[1];
+					$front_end_fields['tracking'] = explode("?", $_SERVER['HTTP_REFERER']);
+					if( isset( $front_end_fields['tracking'][1] ) ) {
+						$front_end_fields['tracking'] = $front_end_fields['tracking'][1];
+					}
 				}
 				foreach ($_POST as $key => $value) {
 					if ( strpos( $key, '_wpcf7' ) === false ) {	// filter ONLY front-end fields
@@ -241,6 +244,7 @@ class Wp_Flg360_Public {
 	        if (curl_errno($ch)) {
 	            $output['success'] = false;
 	            $output['message'] = 'ERROR from curl_errno -> ' . curl_errno($ch) . ': ' . curl_error($ch);
+	            error_log("\nERROR from curl_errno -> " . curl_errno($ch) . ': ' . curl_error($ch), 3, plugin_dir_path( __FILE__ ) . 'php.log');
 	        } else {
 	            $returnCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	            switch ($returnCode) {
@@ -256,11 +260,13 @@ class Wp_Flg360_Public {
 	                    } else {
 	                        $output['success'] = false;
 	                        $output['message'] = "<p> API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent;
+	                        error_log("\nAPI Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent, 3, plugin_dir_path( __FILE__ ) . 'php.log');
 	                    }
 	                    break;
 	                default:
 	                    $output['success'] = false;
-	                    $output['message'] = '<p>HTTP ERROR -> ' . $returnCode;
+	                    $output['message'] = 'HTTP ERROR -> ' . $returnCode;
+	                    error_log("\nHTTP ERROR -> " . $returnCode, 3, plugin_dir_path( __FILE__ ) . 'php.log');
 	                    break;
 	            }
 	        }
@@ -268,6 +274,7 @@ class Wp_Flg360_Public {
 
 	        return $output;
 	    }
+	    error_log("\nUser already existed. Return code " . $user_id, 3, plugin_dir_path( __FILE__ ) . 'php.log');
 
 	    return 0;
 
