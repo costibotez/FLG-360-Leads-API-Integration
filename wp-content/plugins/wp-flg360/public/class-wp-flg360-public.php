@@ -172,10 +172,12 @@ class Wp_Flg360_Public {
 	        	}
 	        	if( strpos($tracking_pairs[2], '=') !== false ) {
 	        		$term = explode('=', $tracking_pairs[2])[1];
-	        		$lead['term']	= $term;
+	        		$lead['term'] = $term;
 	        	}
-	        } else {
-	        	$lead['source']	= $front_end_fields['source'];
+	        }
+
+	        if( !isset( $lead['source'] ) || empty( $lead['source'] ) ) {
+	        	$lead['source'] = $front_end_fields['source'];
 	        	switch ($front_end_fields['source']) {
 	        		case 'Facebook':
 	        			$lead['medium']	= 'Referral';
@@ -195,7 +197,11 @@ class Wp_Flg360_Public {
 	        		case 'Buses':
 	        			$lead['medium']	= 'Referral';
 	        			break;
+	        		default:
+	        			$lead['medium']	= 'Referral';
+	        			break;
 	        	}
+	        	$lead['term'] = 'None';
 	        }
 	        $lead['title'] 		= $front_end_fields['title'];
 	        $lead['firstname'] 	= $front_end_fields['firstname'];
@@ -244,7 +250,7 @@ class Wp_Flg360_Public {
 	        if (curl_errno($ch)) {
 	            $output['success'] = false;
 	            $output['message'] = 'ERROR from curl_errno -> ' . curl_errno($ch) . ': ' . curl_error($ch);
-	            error_log("\nERROR from curl_errno -> " . curl_errno($ch) . ': ' . curl_error($ch), 3, plugin_dir_path( __FILE__ ) . 'php.log');
+	            error_log("\n [" . date("Y/m/d h:i:sa") . "] ERROR from curl_errno -> " . curl_errno($ch) . ': ' . curl_error($ch), 3, plugin_dir_path( __FILE__ ) . 'php.log');
 	        } else {
 	            $returnCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	            switch ($returnCode) {
@@ -255,18 +261,18 @@ class Wp_Flg360_Public {
 	                        $output['message'] = "<p> Response Status: Passed - Message: " . $dom->getElementsByTagName('message')->item(0)->textContent;
 	                        $output['message'] .= "<p> FLG NUMBER: " . $dom->getElementsByTagName('id')->item(0)->textContent;
 	                        $output['flgNo'] = $dom->getElementsByTagName('id')->item(0)->textContent;
-	                        update_user_meta( $user_id, 'lead_key', $output['flgNo'] );
+	                        // update_user_meta( $user_id, 'lead_key', $output['flgNo'] );
 	                        return $output;
 	                    } else {
 	                        $output['success'] = false;
-	                        $output['message'] = "<p> API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent;
-	                        error_log("\nAPI Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent, 3, plugin_dir_path( __FILE__ ) . 'php.log');
+	                        $output['message'] = "<p> API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent . ' For user: ' . $lead['firstname'] . ' ' . $lead['lastname'];
+	                        error_log("\n [" . date("Y/m/d h:i:sa") . "] API Connection: Success - Lead Entry: Failed - Reason: " . $dom->getElementsByTagName('message')->item(0)->textContent . ' For user: ' . $lead['firstname'] . ' ' . $lead['lastname'] . ' ' . $lead['source'], 3, plugin_dir_path( __FILE__ ) . 'php.log');
 	                    }
 	                    break;
 	                default:
 	                    $output['success'] = false;
 	                    $output['message'] = 'HTTP ERROR -> ' . $returnCode;
-	                    error_log("\nHTTP ERROR -> " . $returnCode, 3, plugin_dir_path( __FILE__ ) . 'php.log');
+	                    error_log("\n [" . date("Y/m/d h:i:sa") . "] HTTP ERROR -> " . $returnCode, 3, plugin_dir_path( __FILE__ ) . 'php.log');
 	                    break;
 	            }
 	        }
@@ -274,7 +280,12 @@ class Wp_Flg360_Public {
 
 	        return $output;
 	    }
-	    error_log("\nUser already existed. Return code " . $user_id, 3, plugin_dir_path( __FILE__ ) . 'php.log');
+	    error_log("\n [" . date("Y/m/d h:i:sa") . "] Mandatory fields for user: " .
+	    	         'First name: ' . $front_end_fields['firstname'] . ' ' .
+	    	         'Last name: ' . $front_end_fields['surname'] . ' ' .
+	    	         'Post code: ' . $front_end_fields['postcode'] . ' ' .
+	    	         'Mobile: ' . $front_end_fields['mobile'] . ' ' .
+	    	         'Housenumber: ' . $front_end_fields['housenumber'] , 3, plugin_dir_path( __FILE__ ) . 'php.log');
 
 	    return 0;
 
@@ -289,55 +300,57 @@ class Wp_Flg360_Public {
 		if( !empty( $front_end_fields['form_id'] ) && $front_end_fields['form_id'] == '7930') {
 			if( !empty( $front_end_fields['firstname'] ) && !empty( $front_end_fields['surname'] ) && !empty( $front_end_fields['postcode'] ) && !empty( $front_end_fields['mobile'] ) && !empty( $front_end_fields['housenumber'] ) && !empty( $front_end_fields['email'] ) && $this->is_valid_email( $front_end_fields['email'] ) ) {
 
-				$username = explode("@", $front_end_fields['email'])[0];
-				$password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
-				$email_address = $front_end_fields['email'];
+				// $username = explode("@", $front_end_fields['email'])[0];
+				// $password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
+				// $email_address = $front_end_fields['email'];
 
-				$user_id = -1;
+				// $user_id = -1;
 
-				if ( ! username_exists( $username ) ) {
-					$user_id = wp_create_user( $username, $password, $email_address );
-					$user = new WP_User( $user_id );
-					$user->set_role( 'subscriber' );
+				// if ( ! username_exists( $username ) ) {
+				// 	$user_id = wp_create_user( $username, $password, $email_address );
+				// 	$user = new WP_User( $user_id );
+				// 	$user->set_role( 'subscriber' );
 
-				}
+				// }
 
-				if ( !is_wp_error($user_id) ) {
-	                foreach ($front_end_fields as $key => $value) {
-	                    if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
-	                        add_user_meta($user_id, 'lead_'.$key, $value, true);
-	                    }
-	                }
-					return $user_id;
-	            }
-				return -1;
+				// if ( !is_wp_error($user_id) ) {
+	   //              foreach ($front_end_fields as $key => $value) {
+	   //                  if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
+	   //                      add_user_meta($user_id, 'lead_'.$key, $value, true);
+	   //                  }
+	   //              }
+				// 	return $user_id;
+	   //          }
+				// return -1;
+				return 1;
 			}
 			return -2;
 		} else {
 			if( !empty( $front_end_fields['firstname'] ) && !empty( $front_end_fields['surname'] ) && !empty( $front_end_fields['email'] ) && $this->is_valid_email( $front_end_fields['email'] ) ) {
 
-				$username = explode("@", $front_end_fields['email'])[0];
-				$password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
-				$email_address = $front_end_fields['email'];
+				// $username = explode("@", $front_end_fields['email'])[0];
+				// $password = md5($front_end_fields['firstname'].$front_end_fields['surname'].rand(0, strlen($front_end_fields['email'])));
+				// $email_address = $front_end_fields['email'];
 
-				$user_id = -1;
+				// $user_id = -1;
 
-				if ( ! username_exists( $username ) ) {
-					$user_id = wp_create_user( $username, $password, $email_address );
-					$user = new WP_User( $user_id );
-					$user->set_role( 'subscriber' );
+				// if ( ! username_exists( $username ) ) {
+				// 	$user_id = wp_create_user( $username, $password, $email_address );
+				// 	$user = new WP_User( $user_id );
+				// 	$user->set_role( 'subscriber' );
 
-				}
+				// }
 
-				if ( !is_wp_error($user_id) ) {
-	                foreach ($front_end_fields as $key => $value) {
-	                    if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
-	                        add_user_meta($user_id, 'lead_'.$key, $value, true);
-	                    }
-	                }
-					return $user_id;
-	            }
-				return -1;
+				// if ( !is_wp_error($user_id) ) {
+	   //              foreach ($front_end_fields as $key => $value) {
+	   //                  if (!update_user_meta($user_id, 'lead_'.$key, $value, get_user_meta($user_id, 'lead_'.$key, $value))) {
+	   //                      add_user_meta($user_id, 'lead_'.$key, $value, true);
+	   //                  }
+	   //              }
+				// 	return $user_id;
+	   //          }
+				// return -1;
+				return 1;
 			}
 			return -2;
 		}
