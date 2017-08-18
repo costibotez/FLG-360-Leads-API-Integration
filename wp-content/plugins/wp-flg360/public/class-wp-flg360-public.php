@@ -107,7 +107,12 @@ class Wp_Flg360_Public {
 	 * @since    1.0.0
 	 */
 	public function track_cf7_post() {
-
+		// if( isset($_SESSION))
+		session_start();
+		if( !isset( $_SESSION['landing_page'] ) ) {
+			$_SESSION['landing_page'] = $_SERVER['REQUEST_URI'];
+		}
+		// echo '<pre>'; print_r($_SESSION); echo '</pre>';
 		if ( $_POST ) {
 
 			if ( isset( $_POST['_wpcf7'] ) && ( !empty( $_POST['_wpcf7'] ) ) ) {	// if it's a CF7 submission
@@ -134,7 +139,7 @@ class Wp_Flg360_Public {
 				// 	echo '<pre>'; print_r(get_user_meta(9)); echo '</pre>'; exit;
 				// }
 				$this->send_lead_to_flg($front_end_fields);
-				// echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
+				echo '<pre>'; print_r($front_end_fields); echo '</pre>'; exit;
 				// echo '<pre>'; print_r($this->send_lead_to_flg($front_end_fields)); echo '</pre>'; exit;
 			}
 		}
@@ -250,6 +255,7 @@ class Wp_Flg360_Public {
 	        $lead['data3'] 		= $front_end_fields['notbankrupt'];
 	        $lead['data4'] 		= $front_end_fields['vehicle'];
 	        $lead['data5'] 		= $front_end_fields['licence'];
+
 	        if( isset( $front_end_fields['source'] ) && !empty( $front_end_fields['source'] ) ) {
 	        	$lead['data6'] 		= $front_end_fields['source'];
 	        }
@@ -258,6 +264,9 @@ class Wp_Flg360_Public {
 	        }
 	        if( isset( $front_end_fields['addedcomments'] ) && !empty( $front_end_fields['addedcomments'] ) ) {
 	        	$lead['data8'] 		= $front_end_fields['addedcomments'];
+	        }
+	        if( isset( $_SESSION['landing_page'] ) /* & strpos( $_SESSION['landing_page'], 'refusedcarfinance.com') !== false */ ) {
+	        	$lead['data9'] = $_SESSION['landing_page'];
 	        }
 
 	        $dom = new DOMDocument('1.0', 'iso-8859-1');
