@@ -118,6 +118,8 @@ class Wp_Flg360_Public {
 					$front_end_fields['tracking'] = explode("?", $_SERVER['HTTP_REFERER']);
 					if( isset( $front_end_fields['tracking'][1] ) ) {
 						$front_end_fields['tracking'] = $front_end_fields['tracking'][1];
+					} else {
+						unset($front_end_fields['tracking']);
 					}
 				}
 				foreach ($_POST as $key => $value) {
@@ -161,47 +163,72 @@ class Wp_Flg360_Public {
 	        // $lead['introducer'] = $user_id;
 	        // $lead['user']		= $user_id;
 	        if( isset( $front_end_fields['tracking'] ) ) {
-	        	$tracking_pairs = explode('&',$front_end_fields['tracking']);
-	        	if( strpos($tracking_pairs[0], '=') !== false ) {
-	        		$source = explode('=', $tracking_pairs[0])[1];
-	        		$lead['source']	= $source;
-	        	}
-	        	if( strpos($tracking_pairs[1], '=') !== false ) {
-	        		$medium = explode('=', $tracking_pairs[1])[1];
-	        		$lead['medium']	= $medium;
-	        	}
-	        	if( strpos($tracking_pairs[2], '=') !== false ) {
-	        		$term = explode('=', $tracking_pairs[2])[1];
-	        		$lead['term'] = $term;
-	        	}
+	        	if( strpos($front_end_fields['tracking'], 'gclid') !== false ) {	// Google PPC
+	        		$term = explode('=', $front_end_fields['tracking'])[1];
+	        		$lead['source']	= 'Google';
+	        		$lead['medium']	= 'PPC';
+	        		$lead['term']	= $term;
+	        	} else {															// Email marketing
+		        	$tracking_pairs = explode('&',$front_end_fields['tracking']);
+		        	if( strpos($tracking_pairs[0], '=') !== false ) {
+		        		$source = explode('=', $tracking_pairs[0])[1];
+		        		$lead['source']	= $source;
+		        	}
+		        	if( strpos($tracking_pairs[1], '=') !== false ) {
+		        		$medium = explode('=', $tracking_pairs[1])[1];
+		        		$lead['medium']	= $medium;
+		        	}
+		        	if( strpos($tracking_pairs[2], '=') !== false ) {
+		        		$term = explode('=', $tracking_pairs[2])[1];
+		        		$lead['term'] = $term;
+		        	}
+
+		        	if( !isset( $lead['source'] ) || empty( $lead['source'] ) ||
+	        			!isset( $lead['medium'] ) || empty( $lead['medium'] ) ||
+	        			!isset( $lead['term'] ) || empty( $lead['term'] ) ) {
+		        		unset( $lead['source'] );
+		        		unset( $lead['medium'] );
+		        		unset( $lead['term'] );
+
+		        	}
+		        }
 	        }
 
-	        if( !isset( $lead['source'] ) || empty( $lead['source'] ) ) {
-	        	$lead['source'] = $front_end_fields['source'];
-	        	switch ($front_end_fields['source']) {
-	        		case 'Facebook':
-	        			$lead['medium']	= 'Referral';
-	        			break;
-	        		case 'Email':
-	        			$lead['medium']	= 'Referral';
-	        			break;
-	        		case 'Radio':
-	        			$lead['medium']	= 'Referral';
-	        			break;
-	        		case 'Google':
-	        			$lead['medium']	= 'Organic';
-	        			break;
-	        		case 'Bing':
-	        			$lead['medium']	= 'Organic';
-	        			break;
-	        		case 'Buses':
-	        			$lead['medium']	= 'Referral';
-	        			break;
-	        		default:
-	        			$lead['medium']	= 'Referral';
-	        			break;
-	        	}
-	        	$lead['term'] = 'None';
+	        if( !isset( $lead['source'] ) || empty( $lead['source'] ) ||
+	        	!isset( $lead['medium'] ) || empty( $lead['medium'] ) ||
+	        	!isset( $lead['term'] ) || empty( $lead['term'] ) ) {
+
+	        	if( isset( $front_end_fields['source'] ) ) {
+		        	$lead['source'] = $front_end_fields['source'];
+		        	switch ($front_end_fields['source']) {
+		        		case 'Facebook':
+		        			$lead['medium']	= 'Referral';
+		        			break;
+		        		case 'Email':
+		        			$lead['medium']	= 'Referral';
+		        			break;
+		        		case 'Radio':
+		        			$lead['medium']	= 'Referral';
+		        			break;
+		        		case 'Google':
+		        			$lead['medium']	= 'Organic';
+		        			break;
+		        		case 'Bing':
+		        			$lead['medium']	= 'Organic';
+		        			break;
+		        		case 'Buses':
+		        			$lead['medium']	= 'Referral';
+		        			break;
+		        		default:
+		        			$lead['medium']	= 'Referral';
+		        			break;
+		        	}
+		        	$lead['term'] = 'None';
+		        } else {
+		        	$lead['source']	= 'Google';
+		        	$lead['medium']	= 'Organic';
+		        	$lead['term'] = 'None';
+		        }
 	        }
 	        $lead['title'] 		= $front_end_fields['title'];
 	        $lead['firstname'] 	= $front_end_fields['firstname'];
@@ -223,6 +250,15 @@ class Wp_Flg360_Public {
 	        $lead['data3'] 		= $front_end_fields['notbankrupt'];
 	        $lead['data4'] 		= $front_end_fields['vehicle'];
 	        $lead['data5'] 		= $front_end_fields['licence'];
+	        if( isset( $front_end_fields['source'] ) && !empty( $front_end_fields['source'] ) ) {
+	        	$lead['data6'] 		= $front_end_fields['source'];
+	        }
+	        if( isset( $front_end_fields['promocode'] ) && !empty( $front_end_fields['promocode'] ) ) {
+	        	$lead['data7'] 		= $front_end_fields['promocode'];
+	        }
+	        if( isset( $front_end_fields['addedcomments'] ) && !empty( $front_end_fields['addedcomments'] ) ) {
+	        	$lead['data8'] 		= $front_end_fields['addedcomments'];
+	        }
 
 	        $dom = new DOMDocument('1.0', 'iso-8859-1');
 	        $root = $dom->createElement('data');
